@@ -168,7 +168,8 @@ public class MainActivity extends Activity {
         config.setDownloadUrl(url);
         config.setMd5(md5);
         config.setSavePath(savePath);
-        return FileDownLoadManager.getInstance().startDownload(config);
+        DownLoader downLoader = FileDownLoadManager.getInstance().startDownload(config);
+        return downLoader;
     }
 
     public String getBasePath(){
