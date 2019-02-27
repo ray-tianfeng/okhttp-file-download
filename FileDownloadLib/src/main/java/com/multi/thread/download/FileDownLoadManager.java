@@ -3,6 +3,7 @@ package com.multi.thread.download;
 import android.content.Context;
 
 import java.io.FileNotFoundException;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +24,7 @@ public class FileDownLoadManager {
     private CopyOnWriteArrayList<DownLoader> downloaderList;
     private boolean isCallOnPause = false;
     private static FileDownLoadManager mFileDownLoadManager = null;
-    private Context mContext;
+    private WeakReference<Context> mContext;
     public FileDownLoadManager() {
         downloaderList = new CopyOnWriteArrayList<>();
         SchedulerManager.getInstance().scheduleWithFixedDelay(new Runnable() {
@@ -64,22 +65,26 @@ public class FileDownLoadManager {
         return mFileDownLoadManager;
     }
 
-    public void init(Context mContext){
-        this.mContext = mContext;
+    public void onCreate(Context mContext){
+        this.mContext = new WeakReference<>(mContext);
     }
 
     /**
      * 开始下载
      * @param config 下载配置
      */
-    public DownLoader startDownload(DownLoadConfig config){
+    public DownLoader startDownload(DownLoadConfig config) throws RuntimeException{
         if(config!=null && !config.checkParams()){
            throw new RuntimeException("check params!!!");
         }
-        DownLoader downLoader = new DownLoader(config,mContext);
+        DownLoader downLoader = new DownLoader(config,getContext());
         downLoader.start();
         downloaderList.add(downLoader);
         return downLoader;
+    }
+
+    public Context getContext(){
+        return mContext.get();
     }
 
     public void onPause(){
@@ -88,5 +93,9 @@ public class FileDownLoadManager {
 
     public void onResume(){
         isCallOnPause = false;
+    }
+
+    public void onDestroy(){
+        SchedulerManager.getInstance().onDestroy();
     }
 }

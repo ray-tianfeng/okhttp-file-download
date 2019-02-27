@@ -20,5 +20,5 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.github.ray-tianfeng:FileDownload:v1.0'
+    compile project(':FileDownloadLib')
 }

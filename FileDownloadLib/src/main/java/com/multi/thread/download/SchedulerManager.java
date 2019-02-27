@@ -7,10 +7,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 任务调度器
  * @author zl
  * @time 2018/11/27 0027.
  */
-
 public class SchedulerManager {
     private static SchedulerManager mSchedulerManager = null;
     private ScheduledThreadPoolExecutor mScheduledExecutor;

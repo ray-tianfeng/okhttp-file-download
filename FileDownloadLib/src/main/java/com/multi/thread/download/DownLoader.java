@@ -29,12 +29,12 @@ import okhttp3.Response;
 
 public class DownLoader {
     private DownLoadConfig config;//配置
-    private CopyOnWriteArrayList<Stem> stems;//下载线程句柄
+    private CopyOnWriteArrayList<DownloadStub> downloadStubs;//下载线程句柄
     private Context mContext;
     public DownLoader(DownLoadConfig config,Context mContext) {
         this.config = config;
         this.mContext = mContext;
-        stems = new CopyOnWriteArrayList<>();
+        downloadStubs = new CopyOnWriteArrayList<>();
     }
 
     public void start(){//开始下载
@@ -59,7 +59,7 @@ public class DownLoader {
                     }
                     config.setFileLength(fileLength);
                     loadLocalConfig();//未获到本地配置
-                    config.burst();//分片
+                    config.spiltByFileLength();//分片
                     config.getCallback().onStart();//通知开始下载
                     for(int i=0;i<config.getBurstCount();i++){
                         DownLoadConfig.Burst bt = config.getBursts().get(i);
@@ -75,7 +75,7 @@ public class DownLoader {
 
     private boolean loadLocalConfig() {//本地缓存
         String burstsStr = SharedPUtils.getString(mContext, config.makeFile(),"");
-        SharedPUtils.getString(mContext, MD5Utils.md5(config.getDownloadUrl()),"");
+        SharedPUtils.getString(mContext, config.makeFile(),"");
         if(StringUtils.isEmpty(burstsStr) || !FileUtils.isExits(config.getSavePath())) return false;
         ArrayList<DownLoadConfig.Burst> bursts = (ArrayList<DownLoadConfig.Burst>) JSON.parseArray(burstsStr,DownLoadConfig.Burst.class);
         config.getBursts().clear();
@@ -90,11 +90,11 @@ public class DownLoader {
      */
     private void downloadFileByRange(DownLoadConfig.Burst bt) throws FileNotFoundException {
         Call call = HttpUtil.getInstance().downloadFileByRange(config.getDownloadUrl(), bt.getStartIndex()+bt.getDownloadIndex(), bt.getEndIndex(), new FileDownloadRequestCallback(bt,config.getSavePath()));
-        Stem stem = new Stem();
-        stem.setCall(call);
-        stem.setDownloadLength(0L);
-        stem.setBurst(bt);
-        stems.add(stem);
+        DownloadStub stub = new DownloadStub();
+        stub.setCall(call);
+        stub.setDownloadLength(0L);
+        stub.setBurst(bt);
+        downloadStubs.add(stub);
     }
 
     /**
@@ -102,16 +102,16 @@ public class DownLoader {
      * @return boolean true同步成功 false同步失败，下载完成后会同步失败
      */
     public boolean syncDownloadProgress(){
-        if(stems==null || stems.size()==0) return true;
+        if(downloadStubs == null || downloadStubs.size()==0) return true;
         long downloadTotal = 0L;
         for(DownLoadConfig.Burst burst:config.getBursts()){
             downloadTotal += burst.getDownloadIndex();
         }
-        float progress = DataFormatUtils.formatFloat(downloadTotal,0F)/ DataFormatUtils.formatFloat(config.getFileLength(),1F);
+        double progress = DataFormatUtils.formatFloat(downloadTotal,0F)/ DataFormatUtils.formatFloat(config.getFileLength(),1F);
         progress = new BigDecimal(progress).setScale(2, BigDecimal.ROUND_HALF_UP).floatValue();
-        config.getCallback().onProgress(progress);
+        config.getCallback().onProgress((float)progress);
         if(progress == 1){
-            if(StringUtils.isEmpty(config.getMd5()) && !MD5Utils.md5(config.getSavePath()).equals(config.getMd5())){//验证md5值
+            if(!StringUtils.isEmpty(config.getMd5()) && !MD5Utils.md5(config.getSavePath()).equals(config.getMd5())){//验证md5值
                 config.getCallback().onFail();
                 return false;
             }
@@ -127,16 +127,13 @@ public class DownLoader {
      * @throws FileNotFoundException
      */
     public void checkOrRestartStem() throws FileNotFoundException {
-        for(Stem stem:stems){
-            if(stem.getDownloadLength() == stem.getBurst().getDownloadIndex()){
-                if(!stem.getCall().isCanceled() && stem.getCall().isExecuted()){
-                    stem.getCall().cancel();
-                }
-                if(stem.getBurst().getDownloadIndex()<stem.getBurst().getEndIndex())
-                    downloadFileByRange(stem.getBurst());
-                stems.remove(stem);
+        for(DownloadStub stub : downloadStubs){
+            if(stub.getDownloadLength() == stub.getBurst().getDownloadIndex()){//当前进度和上次下载进度相同则重启线程下载,或者当前线程已经下载完成则移除当先线程下载
+                if(!stub.getCall().isCanceled() && stub.getCall().isExecuted()) stub.getCall().cancel();
+                if(stub.getBurst().getDownloadIndex() < stub.getBurst().getEndIndex()) downloadFileByRange(stub.getBurst());
+                downloadStubs.remove(stub);
             }else{
-                stem.setDownloadLength(stem.getBurst().getDownloadIndex());
+                stub.setDownloadLength(stub.getBurst().getDownloadIndex());
             }
         }
     }
@@ -145,13 +142,13 @@ public class DownLoader {
      * 停止下载
      */
     public void stop(){
-        if(stems == null) return;
-        for(Stem stem:stems){
-            if(!stem.getCall().isCanceled() && stem.getCall().isExecuted()){
-                stem.getCall().cancel();
+        if(downloadStubs == null) return;
+        for(DownloadStub stub : downloadStubs){
+            if(!stub.getCall().isCanceled() && stub.getCall().isExecuted()){
+                stub.getCall().cancel();
             }
         }
-        stems.clear();
+        downloadStubs.clear();
         config.getCallback().onStop();
     }
 
@@ -167,10 +164,10 @@ public class DownLoader {
         return config;
     }
 
-    public class Stem{//下载线程句柄
+    public class DownloadStub{//下载线程句柄
         private Call call;//请求对象Call
         private DownLoadConfig.Burst burst;//当前现在进度
-        private long downloadLength;//上次同步下载进度
+        private long downloadLength;//下载进度
 
         public Call getCall() {
             return call;

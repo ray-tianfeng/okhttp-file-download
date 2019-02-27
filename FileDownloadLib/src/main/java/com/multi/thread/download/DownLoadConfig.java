@@ -1,5 +1,6 @@
 package com.multi.thread.download;
 
+import com.multi.thread.download.util.DataFormatUtils;
 import com.multi.thread.download.util.MD5Utils;
 import com.multi.thread.download.util.StringUtils;
 
@@ -19,18 +20,18 @@ public class DownLoadConfig {
     private String md5;
     private ArrayList<Burst> bursts;
 
-    public void burst(){
+    public void spiltByFileLength(){
         if(bursts.size() > 0) return;
-        long burstLength = fileLength/(new Integer(burstCount)).longValue();
-        for(int i=0;i<burstCount;i++){
-            long startIndex = (new Integer(i).longValue())*burstLength;
-            long endIndex = (new Integer(i+1).longValue())*burstLength;
+        long burstLength = fileLength / DataFormatUtils.formatLong(burstCount, 5L);
+        for(int i = 0; i < burstCount; i++){
+            long start = i * burstLength;
+            long end = (i+1) * burstLength;
             if(i == burstCount-1){
-                endIndex = fileLength-1;
+                end = fileLength-1;
             }else{
-                endIndex--;
+                end -= 1;
             }
-            Burst burst = new Burst(startIndex,endIndex,0);
+            Burst burst = new Burst(start, end, 0);
             bursts.add(burst);
         }
     }
@@ -136,6 +137,5 @@ public class DownLoadConfig {
         public void setDownloadIndex(long downloadIndex) {
             this.downloadIndex = downloadIndex;
         }
-
     }
 }

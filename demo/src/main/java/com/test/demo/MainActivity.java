@@ -1,6 +1,7 @@
 package com.test.demo;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
@@ -26,7 +27,7 @@ public class MainActivity extends Activity {
         pb1 = (ProgressBar) findViewById(R.id.pb_progressbar1);
         pb2 = (ProgressBar) findViewById(R.id.pb_progressbar2);
         pb3 = (ProgressBar) findViewById(R.id.pb_progressbar3);
-        FileDownLoadManager.getInstance().init(this);
+        FileDownLoadManager.getInstance().onCreate(this);
     }
 
     @Override
@@ -36,9 +37,15 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
         FileDownLoadManager.getInstance().onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        FileDownLoadManager.getInstance().onDestroy();
     }
 
     public void onClick(View view){
@@ -70,6 +77,7 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onProgress(final float progress) {
+                    System.out.println("pg1进度："+progress);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
