@@ -17,6 +17,16 @@ public class DataFormatUtils {
         return l;
     }
 
+    public static int formatInteger(Object obj,int defaultValue){
+        int l = defaultValue;
+        try {
+            l = Integer.valueOf(String.valueOf(obj));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return l;
+    }
+
     public static float formatFloat(Object obj,float defaultValue) {
         float f = defaultValue;
         try {

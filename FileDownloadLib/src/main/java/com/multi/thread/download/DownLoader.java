@@ -73,14 +73,13 @@ public class DownLoader {
         });
     }
 
-    private boolean loadLocalConfig() {//本地缓存
+    private void loadLocalConfig() {//本地缓存
         String burstsStr = SharedPUtils.getString(mContext, config.makeFile(),"");
         SharedPUtils.getString(mContext, config.makeFile(),"");
-        if(StringUtils.isEmpty(burstsStr) || !FileUtils.isExits(config.getSavePath())) return false;
+        if(StringUtils.isEmpty(burstsStr) || !FileUtils.isExits(config.getSavePath())) return;
         ArrayList<DownLoadConfig.Burst> bursts = (ArrayList<DownLoadConfig.Burst>) JSON.parseArray(burstsStr,DownLoadConfig.Burst.class);
         config.getBursts().clear();
         config.getBursts().addAll(bursts);
-        return true;
     }
 
     /**
@@ -107,12 +106,13 @@ public class DownLoader {
         for(DownLoadConfig.Burst burst:config.getBursts()){
             downloadTotal += burst.getDownloadIndex();
         }
-        double progress = DataFormatUtils.formatFloat(downloadTotal,0F)/ DataFormatUtils.formatFloat(config.getFileLength(),1F);
+        double progress = DataFormatUtils.formatFloat(downloadTotal,0F) / DataFormatUtils.formatFloat(config.getFileLength(),1F);
         progress = new BigDecimal(progress).setScale(2, BigDecimal.ROUND_HALF_UP).floatValue();
         config.getCallback().onProgress((float)progress);
-        if(progress == 1){
+        if(1 == progress){
             if(!StringUtils.isEmpty(config.getMd5()) && !MD5Utils.md5(config.getSavePath()).equals(config.getMd5())){//验证md5值
                 config.getCallback().onFail();
+                SharedPUtils.putString(mContext,config.makeFile(),"");//md5校验失败重新下载
                 return false;
             }
             config.getCallback().onSuccess(config.getSavePath());

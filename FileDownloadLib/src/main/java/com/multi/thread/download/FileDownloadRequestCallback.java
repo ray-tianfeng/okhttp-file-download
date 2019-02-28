@@ -42,7 +42,7 @@ public class FileDownloadRequestCallback implements Callback {
         downloadFile.seek(burst.getStartIndex()+burst.getDownloadIndex());
         byte[] buffer = new byte[1024<<2];
         int length = -1;
-        while ((length = is.read(buffer))>0){
+        while (!call.isCanceled() && (length = is.read(buffer))>0){
             downloadFile.write(buffer,0,length);
             burst.setDownloadIndex(burst.getDownloadIndex()+ DataFormatUtils.formatLong(length,0L));
         }

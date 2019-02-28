@@ -1,5 +1,6 @@
 package com.multi.thread.download;
 
+import android.app.Application;
 import android.content.Context;
 
 import java.io.FileNotFoundException;
@@ -24,7 +25,7 @@ public class FileDownLoadManager {
     private CopyOnWriteArrayList<DownLoader> downloaderList;
     private boolean isCallOnPause = false;
     private static FileDownLoadManager mFileDownLoadManager = null;
-    private WeakReference<Context> mContext;
+    private Context mContext;
     public FileDownLoadManager() {
         downloaderList = new CopyOnWriteArrayList<>();
         SchedulerManager.getInstance().scheduleWithFixedDelay(new Runnable() {
@@ -65,8 +66,8 @@ public class FileDownLoadManager {
         return mFileDownLoadManager;
     }
 
-    public void onCreate(Context mContext){
-        this.mContext = new WeakReference<>(mContext);
+    public <T extends Application> void  init(T mContext){
+        this.mContext = mContext;
     }
 
     /**
@@ -77,14 +78,10 @@ public class FileDownLoadManager {
         if(config!=null && !config.checkParams()){
            throw new RuntimeException("check params!!!");
         }
-        DownLoader downLoader = new DownLoader(config,getContext());
+        DownLoader downLoader = new DownLoader(config,mContext);
         downLoader.start();
         downloaderList.add(downLoader);
         return downLoader;
-    }
-
-    public Context getContext(){
-        return mContext.get();
     }
 
     public void onPause(){

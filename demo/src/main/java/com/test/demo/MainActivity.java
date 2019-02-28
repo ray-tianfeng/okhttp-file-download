@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
         pb1 = (ProgressBar) findViewById(R.id.pb_progressbar1);
         pb2 = (ProgressBar) findViewById(R.id.pb_progressbar2);
         pb3 = (ProgressBar) findViewById(R.id.pb_progressbar3);
-        FileDownLoadManager.getInstance().onCreate(this);
+        FileDownLoadManager.getInstance().init(getApplication());
     }
 
     @Override
@@ -58,21 +58,22 @@ public class MainActivity extends Activity {
             downLoader1 = start(url1, new DownLoader.DownLoadCallback() {
                 @Override
                 public void onStart() {
+                    System.out.println("pg1call onStart");
                 }
 
                 @Override
                 public void onStop() {
-
+                    System.out.println("pg1call onStop");
                 }
 
                 @Override
                 public void onSuccess(String savePath) {
-                    System.out.println("savePath:"+savePath);
+                    System.out.println("pg1savePath:"+savePath);
                 }
 
                 @Override
                 public void onFail() {
-
+                    System.out.println("pg1call onFail");
                 }
 
                 @Override
@@ -85,7 +86,7 @@ public class MainActivity extends Activity {
                         }
                     });
                 }
-            },3,(new File(getBasePath(),filterUrlGetFileName(url1))).getAbsolutePath(),"2caa20558d696690472d74a4f1086");
+            },3,(new File(getBasePath(),filterUrlGetFileName(url1))).getAbsolutePath(),"2caa15820558d696690472d74a4f1086");
         }else if(viewID == R.id.stop_bt1){
             if(downLoader1!=null) downLoader1.stop();
         }else if(viewID == R.id.start_bt2){
