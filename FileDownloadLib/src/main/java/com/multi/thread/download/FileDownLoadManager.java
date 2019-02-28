@@ -66,6 +66,11 @@ public class FileDownLoadManager {
         return mFileDownLoadManager;
     }
 
+    /**
+     *
+     * @param mContext application
+     * @param <T>
+     */
     public <T extends Application> void  init(T mContext){
         this.mContext = mContext;
     }

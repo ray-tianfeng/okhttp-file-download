@@ -91,7 +91,7 @@ public class DownLoader {
         Call call = HttpUtil.getInstance().downloadFileByRange(config.getDownloadUrl(), bt.getStartIndex()+bt.getDownloadIndex(), bt.getEndIndex(), new FileDownloadRequestCallback(bt,config.getSavePath()));
         DownloadStub stub = new DownloadStub();
         stub.setCall(call);
-        stub.setDownloadLength(0L);
+        stub.syncDownloadLen(0L);
         stub.setBurst(bt);
         downloadStubs.add(stub);
     }
@@ -128,12 +128,12 @@ public class DownLoader {
      */
     public void checkOrRestartStem() throws FileNotFoundException {
         for(DownloadStub stub : downloadStubs){
-            if(stub.getDownloadLength() == stub.getBurst().getDownloadIndex()){//当前进度和上次下载进度相同则重启线程下载,或者当前线程已经下载完成则移除当先线程下载
-                if(!stub.getCall().isCanceled() && stub.getCall().isExecuted()) stub.getCall().cancel();
-                if(stub.getBurst().getDownloadIndex() < stub.getBurst().getEndIndex()) downloadFileByRange(stub.getBurst());
-                downloadStubs.remove(stub);
+            if(stub.getSyncDownloadLen() == stub.getBurst().getDownloadIndex()){//当前进度和上次下载进度相同则重启线程下载,或者当前线程已经下载完成则移除当先线程下载
+                if(!stub.getCall().isCanceled() && stub.getCall().isExecuted()) stub.getCall().cancel();//停止当前下载
+                if(stub.getBurst().getDownloadIndex() < stub.getBurst().getEndIndex()) downloadFileByRange(stub.getBurst());//重启下载
+                downloadStubs.remove(stub);//移除旧的持有
             }else{
-                stub.setDownloadLength(stub.getBurst().getDownloadIndex());
+                stub.syncDownloadLen(stub.getBurst().getDownloadIndex());
             }
         }
     }
@@ -167,7 +167,7 @@ public class DownLoader {
     public class DownloadStub{//下载线程句柄
         private Call call;//请求对象Call
         private DownLoadConfig.Burst burst;//当前现在进度
-        private long downloadLength;//下载进度
+        private long syncDownloadLen;//同步上次下载进度
 
         public Call getCall() {
             return call;
@@ -177,12 +177,12 @@ public class DownLoader {
             this.call = call;
         }
 
-        public long getDownloadLength() {
-            return downloadLength;
+        public long getSyncDownloadLen() {
+            return syncDownloadLen;
         }
 
-        public void setDownloadLength(long downloadLength) {
-            this.downloadLength = downloadLength;
+        public void syncDownloadLen(long syncDownloadLen) {
+            this.syncDownloadLen = syncDownloadLen;
         }
 
         public DownLoadConfig.Burst getBurst() {
