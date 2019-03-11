@@ -24,14 +24,14 @@ public class DownLoadConfig {
         if(bursts.size() > 0) return;
         long burstLength = fileLength / DataFormatUtils.formatLong(burstCount, 5L);
         for(int i = 0; i < burstCount; i++){
-            long start = i * burstLength;
-            long end = (i+1) * burstLength;
+            long startSub = i * burstLength;
+            long endSub = (i+1) * burstLength;
             if(i == burstCount-1){
-                end = fileLength-1;
+                endSub = fileLength-1;
             }else{
-                end -= 1;
+                endSub -= 1;
             }
-            Burst burst = new Burst(start, end, 0);
+            Burst burst = new Burst(startSub, endSub, 0,0);
             bursts.add(burst);
         }
     }
@@ -101,41 +101,50 @@ public class DownLoadConfig {
     }
 
     public static class Burst{
-        private long startIndex;
-        private long endIndex;
-        private long downloadIndex;
-
+        private long startSub;//开始下载下标
+        private long endSub;//结束下标
+        private long downloadLen;//已经下载的下标
+        private volatile long downloadPastLen;//上1s下载的长度
         public Burst() {
         }
 
-        public Burst(long startIndex, long endIndex, long downloadIndex) {
-            this.startIndex = startIndex;
-            this.endIndex = endIndex;
-            this.downloadIndex = downloadIndex;
+        public Burst(long startSub, long endSub, long downloadLen, long downloadPastLen) {
+            this.startSub = startSub;
+            this.endSub = endSub;
+            this.downloadLen = downloadLen;
+            this.downloadPastLen = downloadPastLen;
         }
 
-        public long getStartIndex() {
-            return startIndex;
+        public long getStartSub() {
+            return startSub;
         }
 
-        public void setStartIndex(long startIndex) {
-            this.startIndex = startIndex;
+        public void setStartSub(long startSub) {
+            this.startSub = startSub;
         }
 
-        public long getEndIndex() {
-            return endIndex;
+        public long getEndSub() {
+            return endSub;
         }
 
-        public void setEndIndex(long endIndex) {
-            this.endIndex = endIndex;
+        public void setEndSub(long endSub) {
+            this.endSub = endSub;
         }
 
-        public long getDownloadIndex() {
-            return downloadIndex;
+        public long getDownloadLen() {
+            return downloadLen;
         }
 
-        public void setDownloadIndex(long downloadIndex) {
-            this.downloadIndex = downloadIndex;
+        public void setDownloadLen(long downloadLen) {
+            this.downloadLen = downloadLen;
+        }
+
+        public long getDownloadPastLen() {
+            return downloadPastLen;
+        }
+
+        public void setDownloadPastLen(long downloadPastLen) {
+            this.downloadPastLen = downloadPastLen;
         }
     }
 }

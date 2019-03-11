@@ -1,6 +1,7 @@
 package com.multi.thread.download;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.multi.thread.download.util.DataFormatUtils;
@@ -74,10 +75,11 @@ public class DownLoader {
     }
 
     private void loadLocalConfig() {//本地缓存
-        String burstsStr = SharedPUtils.getString(mContext, config.makeFile(),"");
+        String burstsLocal = SharedPUtils.getString(mContext, config.makeFile(),"");
+        System.out.println("bendipeizhi:"+burstsLocal);
         SharedPUtils.getString(mContext, config.makeFile(),"");
-        if(StringUtils.isEmpty(burstsStr) || !FileUtils.isExits(config.getSavePath())) return;
-        ArrayList<DownLoadConfig.Burst> bursts = (ArrayList<DownLoadConfig.Burst>) JSON.parseArray(burstsStr,DownLoadConfig.Burst.class);
+        if(StringUtils.isEmpty(burstsLocal) || !FileUtils.isExits(config.getSavePath())) return;
+        ArrayList<DownLoadConfig.Burst> bursts = (ArrayList<DownLoadConfig.Burst>) JSON.parseArray(burstsLocal,DownLoadConfig.Burst.class);
         config.getBursts().clear();
         config.getBursts().addAll(bursts);
     }
@@ -88,7 +90,7 @@ public class DownLoader {
      * @throws FileNotFoundException
      */
     private void downloadFileByRange(DownLoadConfig.Burst bt) throws FileNotFoundException {
-        Call call = HttpUtil.getInstance().downloadFileByRange(config.getDownloadUrl(), bt.getStartIndex()+bt.getDownloadIndex(), bt.getEndIndex(), new FileDownloadRequestCallback(bt,config.getSavePath()));
+        Call call = HttpUtil.getInstance().downloadFileByRange(config.getDownloadUrl(), bt.getStartSub()+bt.getDownloadLen(), bt.getEndSub(), new FileDownloadRequestCallback(bt,config.getSavePath()));
         DownloadStub stub = new DownloadStub();
         stub.setCall(call);
         stub.syncDownloadLen(0L);
@@ -103,12 +105,15 @@ public class DownLoader {
     public boolean syncDownloadProgress(){
         if(downloadStubs == null || downloadStubs.size()==0) return true;
         long downloadTotal = 0L;
+        long downloadRate = 0L;
         for(DownLoadConfig.Burst burst:config.getBursts()){
-            downloadTotal += burst.getDownloadIndex();
+            downloadTotal += burst.getDownloadLen();
+            downloadRate +=  (burst.getDownloadLen() - burst.getDownloadPastLen());
+            burst.setDownloadPastLen(burst.getDownloadLen());
         }
-        double progress = DataFormatUtils.formatFloat(downloadTotal,0F) / DataFormatUtils.formatFloat(config.getFileLength(),1F);
-        progress = new BigDecimal(progress).setScale(2, BigDecimal.ROUND_HALF_UP).floatValue();
-        config.getCallback().onProgress((float)progress);
+        double percentage = DataFormatUtils.formatFloat(downloadTotal,0F) / DataFormatUtils.formatFloat(config.getFileLength(),1F);
+        float progress = new BigDecimal(percentage).setScale(4, BigDecimal.ROUND_HALF_UP).floatValue();
+        config.getCallback().onProgress((float)progress, downloadRate);
         if(1 == progress){
             if(!StringUtils.isEmpty(config.getMd5()) && !MD5Utils.md5(config.getSavePath()).equals(config.getMd5())){//验证md5值
                 config.getCallback().onFail();
@@ -128,12 +133,12 @@ public class DownLoader {
      */
     public void checkOrRestartStem() throws FileNotFoundException {
         for(DownloadStub stub : downloadStubs){
-            if(stub.getSyncDownloadLen() == stub.getBurst().getDownloadIndex()){//当前进度和上次下载进度相同则重启线程下载,或者当前线程已经下载完成则移除当先线程下载
+            if(stub.getSyncDownloadLen() == stub.getBurst().getDownloadLen()){//当前进度和上次下载进度相同则重启线程下载,或者当前线程已经下载完成则移除当先线程下载
                 if(!stub.getCall().isCanceled() && stub.getCall().isExecuted()) stub.getCall().cancel();//停止当前下载
-                if(stub.getBurst().getDownloadIndex() < stub.getBurst().getEndIndex()) downloadFileByRange(stub.getBurst());//重启下载
+                if(stub.getBurst().getDownloadLen() < stub.getBurst().getEndSub()) downloadFileByRange(stub.getBurst());//重启下载
                 downloadStubs.remove(stub);//移除旧的持有
             }else{
-                stub.syncDownloadLen(stub.getBurst().getDownloadIndex());
+                stub.syncDownloadLen(stub.getBurst().getDownloadLen());
             }
         }
     }
@@ -199,6 +204,7 @@ public class DownLoader {
         void onStop();
         void onSuccess(String savePath);
         void onFail();
-        void onProgress(float progress);
+        //返回当前进度和下载长度
+        void onProgress(float progress,long downloadLen);
     }
 }

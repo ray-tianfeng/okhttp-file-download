@@ -1,13 +1,9 @@
 package com.multi.thread.download;
-
-import com.multi.thread.download.util.DataFormatUtils;
 import com.multi.thread.download.util.IOUtils;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -39,12 +35,12 @@ public class FileDownloadRequestCallback implements Callback {
     public void onResponse(Call call, Response response) throws IOException {
         if(response.code() != 206) return;
         InputStream is = response.body().byteStream();
-        downloadFile.seek(burst.getStartIndex()+burst.getDownloadIndex());
+        downloadFile.seek(burst.getStartSub()+burst.getDownloadLen());
         byte[] buffer = new byte[1024<<2];
         int length = -1;
         while (!call.isCanceled() && (length = is.read(buffer))>0){
             downloadFile.write(buffer,0,length);
-            burst.setDownloadIndex(burst.getDownloadIndex()+ DataFormatUtils.formatLong(length,0L));
+            burst.setDownloadLen(burst.getDownloadLen() + length);
         }
         IOUtils.close(is);
         IOUtils.close(response.body());

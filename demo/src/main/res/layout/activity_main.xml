@@ -5,14 +5,28 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ProgressBar
-        android:id="@+id/pb_progressbar1"
-        style="@android:style/Widget.ProgressBar.Horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="5dp"
-        android:layout_margin="30dp"
-        android:max="100"
-        android:progress="0"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        >
+        <ProgressBar
+            android:id="@+id/pb_progressbar1"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="5dp"
+            android:layout_margin="10dp"
+            android:max="1000"
+            android:layout_weight="2"
+            android:progress="0"/>
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="0k/s"
+            android:id="@+id/total1_tv"
+            />
+    </LinearLayout>
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -27,15 +41,28 @@
             android:onClick="onClick"
             android:text="暂停"
             />
-
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        >
     <ProgressBar
         android:id="@+id/pb_progressbar2"
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="fill_parent"
         android:layout_height="5dp"
-        android:layout_margin="30dp"
-        android:max="100"
+        android:layout_margin="10dp"
+        android:max="1000"
+        android:layout_weight="2"
         android:progress="0"/>
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="0k/s"
+            android:id="@+id/total2_tv"
+            />
+    </LinearLayout>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -50,15 +77,28 @@
         android:onClick="onClick"
         android:text="暂停"
         />
-
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        >
     <ProgressBar
         android:id="@+id/pb_progressbar3"
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="fill_parent"
         android:layout_height="5dp"
-        android:layout_margin="30dp"
-        android:max="100"
+        android:layout_margin="10dp"
+        android:layout_weight="2"
+        android:max="1000"
         android:progress="0"/>
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="0k/s"
+            android:id="@+id/total3_tv"
+            />
+    </LinearLayout>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
